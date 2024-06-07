@@ -1,0 +1,13 @@
+description: "Find books using a keyword"
+request:
+  method: GET
+  url: /books
+  queryParameters:
+    titleKeyword: foo
+response:
+  status: 200
+  body:
+    - title: "Foo Book"
+      author: "John Doe"
+    - title: "Another Foo Book"
+      author: "Jane Smith"

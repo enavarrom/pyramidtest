@@ -1,0 +1,105 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.2.7-SNAPSHOT'
+	id 'io.spring.dependency-management' version '1.1.5'
+	id 'org.springframework.cloud.contract' version '4.1.2'
+}
+
+group = 'com.example.test.contract'
+version = '0.0.1-SNAPSHOT'
+
+java {
+	sourceCompatibility = '17'
+}
+
+repositories {
+	mavenCentral()
+	maven { url 'https://repo.spring.io/snapshot' }
+}
+
+ext {
+	set('springCloudVersion', "2023.0.1")
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.springframework.cloud:spring-cloud-starter-contract-verifier'
+	testImplementation 'com.h2database:h2'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+dependencyManagement {
+	imports {
+		mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+	}
+}
+
+sourceSets {
+	integrationTest {
+		java {
+			compileClasspath += main.output + test.output
+			runtimeClasspath += main.output + test.output
+		}
+	};
+
+	componentTest {
+		java {
+			srcDir 'src/componentTest/java'
+			compileClasspath += main.output + test.output
+			runtimeClasspath += main.output + test.output
+		}
+		resources {
+			srcDir 'src/componentTest/resources'
+		}
+	}
+}
+
+configurations {
+	integrationTestImplementation.extendsFrom(testImplementation)
+	integrationTestRuntimeOnly.extendsFrom(testRuntimeOnly)
+
+	componentTestImplementation.extendsFrom(testImplementation)
+	componentTestRuntimeOnly.extendsFrom(testRuntimeOnly)
+}
+
+tasks.register('integrationTest', Test) {
+	description = 'Runs the integration tests.'
+	group = 'verification'
+	testClassesDirs = sourceSets.integrationTest.output.classesDirs
+	classpath = sourceSets.integrationTest.runtimeClasspath
+}
+
+tasks.register('componentTest', Test) {
+	description = 'Runs the component tests.'
+	group = 'verification'
+	testClassesDirs = sourceSets.componentTest.output.classesDirs
+	classpath = sourceSets.componentTest.runtimeClasspath
+}
+
+tasks.named('contractTest') {
+	useJUnitPlatform()
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
+
+tasks.named('integrationTest') {
+	useJUnitPlatform()
+}
+
+tasks.named('componentTest') {
+	useJUnitPlatform()
+}
+
+contracts {
+	baseClassForTests = 'com.example.test.contract.producer.BaseContractTest'
+}
+
+check.dependsOn integrationTest
+check.dependsOn componentTest
+
